@@ -18,6 +18,15 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Backend
+backend/DataFlow.Api/bin
+backend/DataFlow.Api/obj
+backend/**/.env
+backend/**/.env.*
+!backend/**/.env.example
+
+
+
 # Metro
 .metro-health-check*
 
@@ -32,6 +41,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+frontend/.env
 
 # typescript
 *.tsbuildinfo
