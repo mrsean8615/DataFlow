@@ -5,10 +5,10 @@ namespace DataFlow.Api.Interfaces;
 
 public interface ITestLogic
 {
-    Test GetTest();
+    Task<Test> GetTest();
 }
 
 public interface ITestRepository
 {
-    Test GetTest();
+    Task<Test> GetTest();
 }

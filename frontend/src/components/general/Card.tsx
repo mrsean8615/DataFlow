@@ -13,13 +13,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.sm,
 
     // iOS
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
 
     // Android
     elevation: 5,

@@ -10,5 +10,21 @@ public class DataFlowContext : DbContext
     {
     }
 
-    public DbSet<Test> Tests { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Configure the GetInventoryOutput entity
+        modelBuilder.Entity<GetInventoryOutput>(entity =>
+        {
+            entity.HasNoKey(); // This entity does not have a primary key
+            entity.ToView(null); // This entity is not mapped to a database view
+        });
+        modelBuilder.Entity<BaseOutputEntity>(entity =>
+        {
+            entity.HasNoKey(); // This entity does not have a primary key
+            entity.ToView(null); // This entity is not mapped to a database view
+        });
+    }
+
 }

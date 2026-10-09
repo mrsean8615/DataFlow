@@ -14,8 +14,8 @@ public class TestSQL : ITestRepository
         _context = context;
     }
 
-    public Test GetTest()
+    public Task<Test> GetTest()
     {
-        return new Test { message = "heyo" };
+        return Task.FromResult(new Test { message = "heyo" });
     }
 }

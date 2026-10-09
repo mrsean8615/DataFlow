@@ -21,9 +21,9 @@ public class TestAPI : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<Test> Get()
+    public async Task<ActionResult<Test>> Get()
     {
-        var result = _testLogic.GetTest();
+        var result = await _testLogic.GetTest();
         return Ok(result);
     }
 }
