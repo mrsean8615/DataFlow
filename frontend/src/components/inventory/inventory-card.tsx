@@ -14,9 +14,13 @@ export default function InventoryCard({
     <View
       style={[styles.container, { backgroundColor: colors.backgroundElement }]}
     >
-      <Text style={styles.title}>{InventoryItem.name}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>
+        {InventoryItem.name}
+      </Text>
 
-      <Text style={styles.count}>{InventoryItem.quantity}</Text>
+      <Text style={[styles.count, { color: colors.text }]}>
+        {InventoryItem.quantity}
+      </Text>
     </View>
   );
 }
