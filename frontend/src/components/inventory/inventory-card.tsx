@@ -4,15 +4,20 @@ import { useTheme } from "@/context/ThemeContext";
 import { InventoryItem } from "@/types/inventoryType";
 import { FONT_SIZES, SPACING } from "@/constants/theme";
 
+type InventoryCardProps = {
+  InventoryItem: InventoryItem;
+  onPress: () => void;
+};
+
 export default function InventoryCard({
   InventoryItem,
-}: {
-  InventoryItem: InventoryItem;
-}) {
+  onPress,
+}: InventoryCardProps) {
   const { colors } = useTheme();
   return (
-    <View
+    <Pressable
       style={[styles.container, { backgroundColor: colors.backgroundElement }]}
+      onPress={onPress}
     >
       <Text style={[styles.title, { color: colors.text }]}>
         {InventoryItem.name}
@@ -21,7 +26,7 @@ export default function InventoryCard({
       <Text style={[styles.count, { color: colors.text }]}>
         {InventoryItem.quantity}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

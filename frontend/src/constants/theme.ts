@@ -3,8 +3,6 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-import "@/global.css";
-
 import { Platform } from "react-native";
 
 export const COLORS = {
@@ -37,6 +35,15 @@ export const SPACING = {
   lg: 24,
 };
 
+export const HEADER = {
+  iconSize: 26,
+  buttonSize: 44,
+  horizontalPadding: SPACING.md,
+  bottomPadding: SPACING.sm,
+  titleLetterSpacing: 0.4,
+  titleColor: "#ffffff",
+};
+
 export const FONT_SIZES = {
   small: 14,
   body: 16,
@@ -46,16 +53,18 @@ export const FONT_SIZES = {
 
 export type ThemeColor = keyof typeof COLORS.light & keyof typeof COLORS.dark;
 
-export const Fonts = Platform.select({
+export const FONTS = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
+  },
+  android: {
+    sans: "sans-serif",
+    serif: "serif",
+    rounded: "sans-serif-rounded",
+    mono: "monospace",
   },
   default: {
     sans: "normal",
@@ -66,7 +75,7 @@ export const Fonts = Platform.select({
   web: {
     sans: "Arial",
     serif: "Georgia",
-    rounded: "Arial",
+    rounded: "Trebuchet MS",
     mono: "monospace",
   },
 });

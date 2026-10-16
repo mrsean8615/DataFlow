@@ -1,5 +1,4 @@
 import {
-  View,
   Text,
   Pressable,
   StyleSheet,
@@ -7,18 +6,17 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { router } from "expo-router";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { FONT_SIZES, SPACING } from "@/constants/theme";
-import ScreenTitle from "@/components/general/ScreenTitle";
 import { InventoryItemInput } from "@/types/inventoryType";
 import { AddInventoryItem } from "@/services/inventoryService";
 
 export default function AddItem() {
   const { colors } = useTheme();
+  const navigation = useNavigation();
 
   const [sku, setSku] = useState("");
   const [name, setName] = useState("");
@@ -46,7 +44,7 @@ export default function AddItem() {
 
       if (result.returnCode === 0) {
         Alert.alert("Success", result.returnMessage);
-        router.push("/pages/inventory/inventory-page");
+        navigation.goBack();
       } else {
         Alert.alert(
           "Error",

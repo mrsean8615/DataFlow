@@ -1,14 +1,24 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FONT_SIZES, SPACING, COLORS } from "../../constants/theme";
-import { useTheme } from "@/context/ThemeContext";
-import { Link } from "expo-router";
 
-import { Settings, Home, User, ShelvingUnit } from "lucide-react-native";
+import type { RootStackParamList } from "@/types/navigationTypes";
+import { useTheme } from "@/context/ThemeContext";
+import { SPACING, COLORS } from "@/constants/theme";
+import {
+  Home,
+  ShelvingUnit,
+  User,
+  Truck,
+  ArrowLeftRight,
+} from "lucide-react-native";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function Footer() {
+  const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
-
   const { colors } = useTheme();
 
   return (
@@ -21,20 +31,24 @@ export default function Footer() {
         },
       ]}
     >
-      <Pressable>
-        <Link href="/pages/settings/settings-page">
-          <Settings size={36} color={COLORS.dark.text} />
-        </Link>
+      <Pressable onPress={() => navigation.navigate("Profile")}>
+        <User size={36} color={COLORS.dark.text} />
       </Pressable>
-      <Pressable>
-        <Link href="/pages/home-page">
-          <Home size={36} color={COLORS.dark.text} />
-        </Link>
+
+      <Pressable onPress={() => navigation.navigate("Shipments")}>
+        <Truck size={36} color={COLORS.dark.text} />
       </Pressable>
-      <Pressable>
-        <Link href="/pages/inventory/inventory-page">
-          <ShelvingUnit size={36} color={COLORS.dark.text} />
-        </Link>
+
+      <Pressable onPress={() => navigation.navigate("Home")}>
+        <Home size={36} color={COLORS.dark.text} />
+      </Pressable>
+
+      <Pressable onPress={() => navigation.navigate("Inventory")}>
+        <ShelvingUnit size={36} color={COLORS.dark.text} />
+      </Pressable>
+
+      <Pressable onPress={() => navigation.navigate("Orders")}>
+        <ArrowLeftRight size={36} color={COLORS.dark.text} />
       </Pressable>
     </View>
   );
@@ -47,9 +61,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingVertical: SPACING.md,
     alignItems: "center",
-  },
-  text: {
-    fontSize: FONT_SIZES.small,
-    textAlign: "center",
   },
 });

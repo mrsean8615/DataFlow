@@ -1,8 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { router } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "@/context/ThemeContext";
 import { useEffect, useState } from "react";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/types/navigationTypes";
 
 import InventoryCard from "@/components/inventory/inventory-card";
 import ScreenTitle from "@/components/general/ScreenTitle";
@@ -13,6 +14,8 @@ import AddButton from "@/components/general/addButton";
 export default function InventoryPage() {
   const { colors } = useTheme();
   const [inventoryData, setInventoryData] = useState<any[]>([]);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "Inventory">>();
 
   useEffect(() => {
     getInventoryData();
@@ -31,12 +34,13 @@ export default function InventoryPage() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View>
         <ScreenTitle>Inventory</ScreenTitle>
-        <Pressable onPress={() => router.push("/pages/home-page")}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
         {inventoryData.length > 0 ? (
           inventoryData.map((item, index) => (
-            <InventoryCard key={index} InventoryItem={item} />
+            <InventoryCard
+              key={index}
+              InventoryItem={item}
+              onPress={() => navigation.navigate("InventoryDetails", { item })}
+            />
           ))
         ) : (
           <Text>No inventory data available.</Text>
@@ -44,7 +48,7 @@ export default function InventoryPage() {
       </View>
       <AddButton
         style={{ alignSelf: "center" }}
-        onPress={() => router.push("/pages/add-item/add-item-page")}
+        onPress={() => navigation.navigate("AddItem")}
       />
     </View>
   );

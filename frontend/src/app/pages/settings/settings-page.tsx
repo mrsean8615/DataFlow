@@ -1,20 +1,14 @@
 import { View, Text, Pressable, StyleSheet, Switch } from "react-native";
-import { router } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { FONT_SIZES, SPACING } from "@/constants/theme";
 
-import ScreenTitle from "@/components/general/ScreenTitle";
-
 export default function SettingsPage() {
   const { colors, toggleTheme, isDark } = useTheme();
+  const navigation = useNavigation();
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Pressable onPress={() => router.back()}>
-        <ArrowLeft size={24} color={colors.text} />
-      </Pressable>
-      <ScreenTitle>Settings</ScreenTitle>
       <View style={styles.content}>
         <Text style={[styles.subtitle, { color: colors.text }]}>
           Preferences
