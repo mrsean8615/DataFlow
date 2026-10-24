@@ -1,88 +1,270 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItem,
+} from "@react-navigation/drawer";
+import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 
-import type { RootStackParamList } from "@/types/navigationTypes";
+import {
+  Home,
+  ShelvingUnit,
+  User,
+  Truck,
+  ArrowLeftRight,
+  Settings,
+} from "lucide-react-native";
+
+import { useTheme } from "@/context/ThemeContext";
 import MainLayout from "./MainLayout";
 
 import HomePage from "../pages/home-page";
-import SettingsPage from "../pages/settings/settings-page";
 import InventoryPage from "../pages/inventory/inventory-page";
+import InventoryDetailsPage from "../pages/inventory/inventory-details-page";
 import AddItemPage from "../pages/add-item/add-item-page";
 import ProfilePage from "../pages/profile/profile-page";
-import InventoryDetailsPage from "../pages/inventory/inventory-details-page";
 import ShipmentsPage from "../pages/shipments/shipments-page";
 import OrdersPage from "../pages/orders/orders-page";
+import SettingsPage from "../pages/settings/settings-page";
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+// Screen components
+
+function HomeScreen() {
+  return (
+    <MainLayout title="Home">
+      <HomePage />
+    </MainLayout>
+  );
+}
+
+function InventoryScreen() {
+  return (
+    <MainLayout title="Inventory">
+      <InventoryPage />
+    </MainLayout>
+  );
+}
+
+function InventoryDetailsScreen() {
+  return (
+    <MainLayout title="Inventory Details">
+      <InventoryDetailsPage />
+    </MainLayout>
+  );
+}
+
+function AddItemScreen() {
+  return (
+    <MainLayout title="Add Inventory Item">
+      <AddItemPage />
+    </MainLayout>
+  );
+}
+
+function ShipmentsScreen() {
+  return (
+    <MainLayout title="Shipments">
+      <ShipmentsPage />
+    </MainLayout>
+  );
+}
+
+function OrdersScreen() {
+  return (
+    <MainLayout title="Orders">
+      <OrdersPage />
+    </MainLayout>
+  );
+}
+
+function ProfileScreen() {
+  return (
+    <MainLayout title="Profile">
+      <ProfilePage />
+    </MainLayout>
+  );
+}
+
+function SettingsScreen() {
+  return (
+    <MainLayout title="Settings">
+      <SettingsPage />
+    </MainLayout>
+  );
+}
+
+// Nested stack navigators
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={HomeScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function InventoryStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Inventory" component={InventoryScreen} />
+      <Stack.Screen
+        name="InventoryDetails"
+        component={InventoryDetailsScreen}
+      />
+      <Stack.Screen name="AddItem" component={AddItemScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function ShipmentsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Shipments" component={ShipmentsScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function OrdersStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Orders" component={OrdersScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function ProfileStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+    </Stack.Navigator>
+  );
+}
+
+const Drawer = createDrawerNavigator();
+
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const { colors } = useTheme();
+
+  return (
+    <DrawerContentScrollView
+      {...props}
+      style={{ backgroundColor: colors.headerFooterBackground }}
+    >
+      <DrawerItem
+        label="Profile"
+        icon={({ color, size }) => <User color={color} size={size} />}
+        onPress={() => props.navigation.navigate("Profile")}
+        labelStyle={{ color: "#FFFFFF" }}
+        activeTintColor="#FFFFFF"
+        inactiveTintColor="#AAB3C2"
+      />
+
+      <DrawerItem
+        label="Settings"
+        icon={({ color, size }) => <Settings color={color} size={size} />}
+        onPress={() => props.navigation.navigate("Settings")}
+        labelStyle={{ color: "#FFFFFF" }}
+        activeTintColor="#FFFFFF"
+        inactiveTintColor="#AAB3C2"
+      />
+    </DrawerContentScrollView>
+  );
+}
+
+// Main tab navigator
+
+function MainTabs() {
+  const { colors } = useTheme();
+
+  return (
+    <Tab.Navigator
+      initialRouteName="HomeTab"
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: "#FFFFFF",
+        tabBarInactiveTintColor: "#AAB3C2",
+        tabBarStyle: {
+          backgroundColor: colors.headerFooterBackground,
+          borderTopWidth: 0,
+          height: 76,
+          paddingTop: 10,
+          paddingBottom: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "500",
+        },
+      }}
+    >
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeStack}
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+        }}
+      />
+
+      <Tab.Screen
+        name="InventoryTab"
+        component={InventoryStack}
+        options={{
+          title: "Inventory",
+          tabBarIcon: ({ color, size }) => (
+            <ShelvingUnit color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="ShipmentsTab"
+        component={ShipmentsStack}
+        options={{
+          title: "Shipments",
+          tabBarIcon: ({ color, size }) => <Truck color={color} size={size} />,
+        }}
+      />
+
+      <Tab.Screen
+        name="OrdersTab"
+        component={OrdersStack}
+        options={{
+          title: "Orders",
+          tabBarIcon: ({ color, size }) => (
+            <ArrowLeftRight color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
 
 export default function AppNavigator() {
   return (
-    <Stack.Navigator
-      initialRouteName="Home"
-      screenOptions={{ headerShown: false }}
+    <Drawer.Navigator
+      id="RootDrawer"
+      initialRouteName="MainTabs"
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        headerShown: false,
+        drawerPosition: "right",
+        drawerStyle: {
+          backgroundColor: "#0b1730",
+          width: 260,
+        },
+        overlayColor: "rgba(0, 0, 0, 0.5)",
+      }}
     >
-      <Stack.Screen name="Home">
-        {() => (
-          <MainLayout title="Home">
-            <HomePage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
+      <Drawer.Screen name="MainTabs" component={MainTabs} />
 
-      <Stack.Screen name="Settings">
-        {() => (
-          <MainLayout title="Settings">
-            <SettingsPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
+      <Drawer.Screen name="Profile" component={ProfileScreen} />
 
-      <Stack.Screen name="Inventory">
-        {() => (
-          <MainLayout title="Inventory">
-            <InventoryPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen name="InventoryDetails">
-        {() => (
-          <MainLayout title="Inventory Details">
-            <InventoryDetailsPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen name="AddItem">
-        {() => (
-          <MainLayout title="Add Inventory Item">
-            <AddItemPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen name="Profile">
-        {() => (
-          <MainLayout title="Profile">
-            <ProfilePage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen name="Orders">
-        {() => (
-          <MainLayout title="Orders">
-            <OrdersPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen name="Shipments">
-        {() => (
-          <MainLayout title="Shipments">
-            <ShipmentsPage />
-          </MainLayout>
-        )}
-      </Stack.Screen>
-    </Stack.Navigator>
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
+    </Drawer.Navigator>
   );
 }

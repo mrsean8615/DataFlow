@@ -1,8 +1,8 @@
 import { View, StyleSheet, Pressable, Text } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Settings, ArrowLeft } from "lucide-react-native";
+import { Menu, ArrowLeft } from "lucide-react-native";
 
 import type { RootStackParamList } from "@/types/navigationTypes";
 import { useTheme } from "@/context/ThemeContext";
@@ -12,12 +12,11 @@ type HeaderProps = {
   title: string;
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 export default function Header({ title }: HeaderProps) {
-  const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <View
@@ -33,7 +32,11 @@ export default function Header({ title }: HeaderProps) {
         <View style={styles.sideButton}>
           {navigation.canGoBack() && (
             <Pressable
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               hitSlop={10}
@@ -50,13 +53,13 @@ export default function Header({ title }: HeaderProps) {
 
         <View style={[styles.sideButton, styles.rightButton]}>
           <Pressable
-            onPress={() => navigation.navigate("Settings")}
+            onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             accessibilityRole="button"
-            accessibilityLabel="Open settings"
+            accessibilityLabel="Open navigation menu"
             hitSlop={10}
             style={styles.iconButton}
           >
-            <Settings size={HEADER.iconSize} color={HEADER.titleColor} />
+            <Menu size={HEADER.iconSize} color={HEADER.titleColor} />
           </Pressable>
         </View>
       </View>
