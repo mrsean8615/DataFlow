@@ -2,6 +2,33 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 import type { User } from "@/types/UserType";
 
+const MOCK_USERS: (User & { password: string })[] = [
+  {
+    id: "1",
+    firstName: "Sean",
+    lastName: "Payne",
+    email: "sean@dataflow.com",
+    password: "password123",
+    role: "Admin",
+  },
+  {
+    id: "2",
+    firstName: "John",
+    lastName: "Smith",
+    email: "john@dataflow.com",
+    password: "password123",
+    role: "Employee",
+  },
+  {
+    id: "3",
+    firstName: "Sarah",
+    lastName: "Johnson",
+    email: "sarah@dataflow.com",
+    password: "password123",
+    role: "Manager",
+  },
+];
+
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
@@ -27,20 +54,21 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     setIsLoading(true);
 
     try {
-      if (!email || !password) {
-        throw new Error("Email and password are required.");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const matchedUser = MOCK_USERS.find(
+        (user) =>
+          user.email.toLowerCase() === email.trim().toLowerCase() &&
+          user.password === password,
+      );
+
+      if (!matchedUser) {
+        throw new Error("Invalid email or password.");
       }
 
-      // TODO: Replace with C# API authentication request.
-      const mockUser: User = {
-        id: "1",
-        firstName: "Warehouse",
-        lastName: "Employee",
-        email: email,
-        role: "Employee",
-      };
+      const { password: _, ...authenticatedUser } = matchedUser;
 
-      setUser(mockUser);
+      setUser(authenticatedUser);
     } finally {
       setIsLoading(false);
     }

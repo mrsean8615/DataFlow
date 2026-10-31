@@ -27,6 +27,7 @@ import ProfilePage from "../pages/profile/profile-page";
 import ShipmentsPage from "../pages/shipments/shipments-page";
 import OrdersPage from "../pages/orders/orders-page";
 import SettingsPage from "../pages/settings/settings-page";
+import LoginPage from "../pages/account/login-page";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -93,6 +94,14 @@ function SettingsScreen() {
   return (
     <MainLayout title="Settings">
       <SettingsPage />
+    </MainLayout>
+  );
+}
+
+function LoginScreen() {
+  return (
+    <MainLayout title="Login">
+      <LoginPage />
     </MainLayout>
   );
 }
@@ -168,6 +177,14 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         label="Settings"
         icon={({ color, size }) => <Settings color={color} size={size} />}
         onPress={() => props.navigation.navigate("Settings")}
+        labelStyle={{ color: "#FFFFFF" }}
+        activeTintColor="#FFFFFF"
+        inactiveTintColor="#AAB3C2"
+      />
+      <DrawerItem
+        label="Login"
+        icon={({ color, size }) => <User color={color} size={size} />}
+        onPress={() => props.navigation.navigate("Login")}
         labelStyle={{ color: "#FFFFFF" }}
         activeTintColor="#FFFFFF"
         inactiveTintColor="#AAB3C2"
@@ -265,6 +282,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="Profile" component={ProfileScreen} />
 
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Login" component={LoginScreen} />
     </Drawer.Navigator>
   );
 }
