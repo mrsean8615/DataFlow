@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using DataFlow.Api.Entities;
 using DataFlow.Api.Interfaces;
 using DataFlow.Api.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace DataFlow.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 

@@ -1,40 +1,28 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+  useEffect,
+} from "react";
+import { loginUser } from "@/services/authService";
 
 import type { User } from "@/types/UserType";
-
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id: "1",
-    firstName: "Sean",
-    lastName: "Payne",
-    email: "sean@dataflow.com",
-    password: "password123",
-    role: "Admin",
-  },
-  {
-    id: "2",
-    firstName: "John",
-    lastName: "Smith",
-    email: "john@dataflow.com",
-    password: "password123",
-    role: "Employee",
-  },
-  {
-    id: "3",
-    firstName: "Sarah",
-    lastName: "Johnson",
-    email: "sarah@dataflow.com",
-    password: "password123",
-    role: "Manager",
-  },
-];
+import {
+  removeToken,
+  saveToken,
+  getToken,
+  saveUser,
+  getStoredUser,
+  removeUser,
+} from "@/services/tokenStorage";
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,32 +37,54 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
   const isAuthenticated = user !== null;
 
-  // Temporary mock login
+  useEffect(() => {
+    const restoreAuth = async () => {
+      try {
+        const token = await getToken();
+        const storedUser = await getStoredUser();
+
+        if (token && storedUser) {
+          setUser(storedUser);
+        }
+      } catch (error) {
+        console.error("Error restoring authentication:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreAuth();
+  }, []);
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await loginUser(email, password);
 
-      const matchedUser = MOCK_USERS.find(
-        (user) =>
-          user.email.toLowerCase() === email.trim().toLowerCase() &&
-          user.password === password,
-      );
-
-      if (!matchedUser) {
-        throw new Error("Invalid email or password.");
+      if (result.returnCode !== 0) {
+        throw new Error(result.returnMessage);
       }
 
-      const { password: _, ...authenticatedUser } = matchedUser;
+      const loggedInUser: User = {
+        id: result.id,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        email: result.email,
+        role: result.role,
+      };
 
-      setUser(authenticatedUser);
+      await saveToken(result.token);
+      await saveUser(loggedInUser);
+      setUser(loggedInUser);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await removeToken();
+    await removeUser();
     setUser(null);
   };
 

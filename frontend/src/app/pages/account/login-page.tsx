@@ -15,14 +15,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 
 import { COLORS, SPACING, FONT_SIZES } from "@/constants/theme";
-import { useNavigation } from "@react-navigation/native";
-import type { DrawerNavigationProp } from "@react-navigation/drawer";
-import type { DrawerParamList } from "@/types/navigationTypes";
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const { colors } = useTheme();
-  const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +29,6 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigation.navigate("MainTabs", { screen: "HomeTab" });
     } catch (err) {
       setError(
         err instanceof Error

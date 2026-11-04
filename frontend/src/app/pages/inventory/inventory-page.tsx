@@ -43,7 +43,9 @@ export default function InventoryPage() {
             />
           ))
         ) : (
-          <Text>No inventory data available.</Text>
+          <Text style={{ color: colors.text }}>
+            No inventory data available.
+          </Text>
         )}
       </View>
       <AddButton

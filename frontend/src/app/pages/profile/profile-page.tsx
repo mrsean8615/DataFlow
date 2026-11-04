@@ -8,6 +8,7 @@ import { COLORS, SPACING, FONT_SIZES } from "@/constants/theme";
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
+  console.log(user);
 
   if (!isAuthenticated || !user) {
     return (

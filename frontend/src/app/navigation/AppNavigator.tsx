@@ -6,6 +6,7 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
+import { useAuth } from "@/context/AuthContext";
 
 import {
   Home,
@@ -14,6 +15,9 @@ import {
   Truck,
   ArrowLeftRight,
   Settings,
+  LogIn,
+  LogOut,
+  ShieldLock,
 } from "lucide-react-native";
 
 import { useTheme } from "@/context/ThemeContext";
@@ -28,16 +32,27 @@ import ShipmentsPage from "../pages/shipments/shipments-page";
 import OrdersPage from "../pages/orders/orders-page";
 import SettingsPage from "../pages/settings/settings-page";
 import LoginPage from "../pages/account/login-page";
+import { ActivityIndicator } from "react-native";
+import AdminPage from "../pages/admin/admin-page";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 // Screen components
 
 function HomeScreen() {
   return (
-    <MainLayout title="Home">
+    <MainLayout title="DataFlow">
       <HomePage />
+    </MainLayout>
+  );
+}
+
+function AdminScreen() {
+  return (
+    <MainLayout title="Admin Panel">
+      <AdminPage />
     </MainLayout>
   );
 }
@@ -99,26 +114,24 @@ function SettingsScreen() {
 }
 
 function LoginScreen() {
-  return (
-    <MainLayout title="Login">
-      <LoginPage />
-    </MainLayout>
-  );
+  return <LoginPage />;
 }
 
 // Nested stack navigators
-
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="DataFlow" component={HomeScreen} />
     </Stack.Navigator>
   );
 }
 
 function InventoryStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName="Inventory"
+    >
       <Stack.Screen name="Inventory" component={InventoryScreen} />
       <Stack.Screen
         name="InventoryDetails"
@@ -154,10 +167,19 @@ function ProfileStack() {
   );
 }
 
+function AdminStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Admin Panel" component={AdminScreen} />
+    </Stack.Navigator>
+  );
+}
+
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { colors } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <DrawerContentScrollView
@@ -172,7 +194,16 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         activeTintColor="#FFFFFF"
         inactiveTintColor="#AAB3C2"
       />
-
+      {isAuthenticated && user?.role.toLowerCase() === "admin" && (
+        <DrawerItem
+          label="Admin Panel"
+          icon={({ color, size }) => <ShieldLock color={color} size={size} />}
+          onPress={() => props.navigation.navigate("Admin")}
+          labelStyle={{ color: "#FFFFFF" }}
+          activeTintColor="#FFFFFF"
+          inactiveTintColor="#AAB3C2"
+        />
+      )}
       <DrawerItem
         label="Settings"
         icon={({ color, size }) => <Settings color={color} size={size} />}
@@ -181,14 +212,16 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         activeTintColor="#FFFFFF"
         inactiveTintColor="#AAB3C2"
       />
-      <DrawerItem
-        label="Login"
-        icon={({ color, size }) => <User color={color} size={size} />}
-        onPress={() => props.navigation.navigate("Login")}
-        labelStyle={{ color: "#FFFFFF" }}
-        activeTintColor="#FFFFFF"
-        inactiveTintColor="#AAB3C2"
-      />
+      {isAuthenticated && (
+        <DrawerItem
+          label="Logout"
+          icon={({ color, size }) => <LogOut color={color} size={size} />}
+          onPress={() => logout()}
+          labelStyle={{ color: "#FFFFFF" }}
+          activeTintColor="#FFFFFF"
+          inactiveTintColor="#AAB3C2"
+        />
+      )}
     </DrawerContentScrollView>
   );
 }
@@ -261,7 +294,7 @@ function MainTabs() {
   );
 }
 
-export default function AppNavigator() {
+function MainDrawer() {
   return (
     <Drawer.Navigator
       id="RootDrawer"
@@ -278,11 +311,25 @@ export default function AppNavigator() {
       }}
     >
       <Drawer.Screen name="MainTabs" component={MainTabs} />
-
       <Drawer.Screen name="Profile" component={ProfileScreen} />
-
       <Drawer.Screen name="Settings" component={SettingsScreen} />
-      <Drawer.Screen name="Login" component={LoginScreen} />
+      <Drawer.Screen name="Admin" component={AdminStack} />
     </Drawer.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return <ActivityIndicator size="large" />;
+  }
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      {!isAuthenticated ? (
+        <RootStack.Screen name="Login" component={LoginScreen} />
+      ) : (
+        <RootStack.Screen name="MainDrawer" component={MainDrawer} />
+      )}
+    </RootStack.Navigator>
   );
 }
