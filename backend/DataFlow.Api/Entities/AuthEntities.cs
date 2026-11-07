@@ -6,8 +6,10 @@ public class LoginInput
     public string password { get; set; } = string.Empty;
 }
 
-public class LoginOutput : BaseOutputEntity
+public class LoginOutput
 {
+    public int returnCode { get; set; } = 0;
+    public string returnMessage { get; set; } = string.Empty;
     public string token { get; set; } = string.Empty;
 
     public int id { get; set; }

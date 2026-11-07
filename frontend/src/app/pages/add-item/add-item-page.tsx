@@ -5,6 +5,8 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  View,
+  Platform,
 } from "react-native";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -14,50 +16,116 @@ import { FONT_SIZES, SPACING } from "@/constants/theme";
 import { InventoryItemInput } from "@/types/inventoryType";
 import { AddInventoryItem } from "@/services/inventoryService";
 
+type ItemForm = {
+  sku: string;
+  name: string;
+  description: string;
+  quantity: string;
+  reorderLevel: string;
+  location: string;
+};
+
+type ItemErrors = Partial<Record<keyof ItemForm, string>>;
+
 export default function AddItem() {
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const [sku, setSku] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [reorderLevel, setReorderLevel] = useState("");
-  const [location, setLocation] = useState("");
+  const [form, setForm] = useState<ItemForm>({
+    sku: "",
+    name: "",
+    description: "",
+    quantity: "0",
+    reorderLevel: "0",
+    location: "",
+  });
+
+  const [errors, setErrors] = useState<ItemErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field: keyof ItemForm, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const validateForm = () => {
+    const newErrors: ItemErrors = {};
+
+    if (!form.sku.trim()) {
+      newErrors.sku = "SKU is required.";
+    }
+
+    if (!form.name.trim()) {
+      newErrors.name = "Item name is required.";
+    }
+
+    // Quantity must be a non-negative whole number.
+    if (!/^\d+$/.test(form.quantity.trim())) {
+      newErrors.quantity = "Enter a valid non-negative whole number.";
+    }
+
+    // Reorder level must also be a non-negative whole number.
+    if (!/^\d+$/.test(form.reorderLevel.trim())) {
+      newErrors.reorderLevel = "Enter a valid non-negative whole number.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const showMessage = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
 
   async function handleSubmit() {
-    if (!sku.trim() || !name.trim()) {
-      Alert.alert("Error", "SKU and Name are required fields.");
-      return;
-    }
+    if (isSubmitting || !validateForm()) return;
+
     const newItem: InventoryItemInput = {
-      sku: sku.trim(),
-      name: name.trim(),
-      description: description.trim() || "",
-      quantity: Number(quantity) || 0,
-      reorderLevel: Number(reorderLevel) || 0,
-      location: location.trim() || "",
+      sku: form.sku.trim(),
+      name: form.name.trim(),
+      description: form.description.trim(),
+      quantity: Number(form.quantity),
+      reorderLevel: Number(form.reorderLevel),
+      location: form.location.trim(),
     };
 
     try {
+      setIsSubmitting(true);
+
       const result = await AddInventoryItem(newItem);
 
       if (result.returnCode === 0) {
-        Alert.alert("Success", result.returnMessage);
-        navigation.goBack();
+        if (Platform.OS === "web") {
+          window.alert(`Success\n\n${result.returnMessage}`);
+          navigation.goBack();
+        } else {
+          Alert.alert("Success", result.returnMessage, [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]);
+        }
       } else {
-        Alert.alert(
-          "Error",
-          result.returnMessage || "Failed to add item. Please try again.",
-        );
+        showMessage("Error", result.returnMessage || "Failed to add item.");
       }
     } catch (error) {
       console.error("Error adding inventory item:", error);
 
-      Alert.alert("Error", "Something went wrong while adding the item.");
+      showMessage(
+        "Error",
+        "The request failed. Check whether the item was saved before trying again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
-
   const inputStyle = [
     styles.input,
     {
@@ -66,6 +134,13 @@ export default function AddItem() {
       borderColor: colors.backgroundSelected,
     },
   ];
+
+  // Reusable field error display.
+  const renderError = (field: keyof ItemForm) => {
+    if (!errors[field]) return null;
+
+    return <Text style={styles.error}>{errors[field]}</Text>;
+  };
 
   return (
     <ScrollView
@@ -77,66 +152,88 @@ export default function AddItem() {
         Add Inventory Item
       </Text>
 
+      {/* SKU */}
       <Text style={[styles.label, { color: colors.text }]}>SKU *</Text>
       <TextInput
-        style={inputStyle}
-        value={sku}
-        onChangeText={setSku}
+        style={[inputStyle, errors.sku && styles.inputError]}
+        value={form.sku}
+        onChangeText={(value) => handleChange("sku", value)}
         placeholder="e.g. BOX-001"
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="characters"
+        maxLength={30}
       />
+      {renderError("sku")}
 
+      {/* Item Name */}
       <Text style={[styles.label, { color: colors.text }]}>Item Name *</Text>
       <TextInput
-        style={inputStyle}
-        value={name}
-        onChangeText={setName}
+        style={[inputStyle, errors.name && styles.inputError]}
+        value={form.name}
+        onChangeText={(value) => handleChange("name", value)}
         placeholder="Enter item name"
         placeholderTextColor={colors.textSecondary}
+        maxLength={100}
       />
+      {renderError("name")}
 
+      {/* Description */}
       <Text style={[styles.label, { color: colors.text }]}>Description</Text>
       <TextInput
         style={[inputStyle, styles.multiline]}
-        value={description}
-        onChangeText={setDescription}
+        value={form.description}
+        onChangeText={(value) => handleChange("description", value)}
         placeholder="Optional description"
         placeholderTextColor={colors.textSecondary}
         multiline
+        maxLength={500}
       />
 
+      {/* Quantity */}
       <Text style={[styles.label, { color: colors.text }]}>Quantity</Text>
       <TextInput
-        style={inputStyle}
-        value={quantity}
-        onChangeText={setQuantity}
+        style={[inputStyle, errors.quantity && styles.inputError]}
+        value={form.quantity}
+        onChangeText={(value) => handleChange("quantity", value)}
         keyboardType="number-pad"
         placeholder="0"
         placeholderTextColor={colors.textSecondary}
+        maxLength={9}
       />
+      {renderError("quantity")}
 
+      {/* Reorder Level */}
       <Text style={[styles.label, { color: colors.text }]}>Reorder Level</Text>
       <TextInput
-        style={inputStyle}
-        value={reorderLevel}
-        onChangeText={setReorderLevel}
+        style={[inputStyle, errors.reorderLevel && styles.inputError]}
+        value={form.reorderLevel}
+        onChangeText={(value) => handleChange("reorderLevel", value)}
         keyboardType="number-pad"
         placeholder="10"
         placeholderTextColor={colors.textSecondary}
+        maxLength={9}
       />
+      {renderError("reorderLevel")}
 
+      {/* Location */}
       <Text style={[styles.label, { color: colors.text }]}>Location</Text>
       <TextInput
         style={inputStyle}
-        value={location}
-        onChangeText={setLocation}
+        value={form.location}
+        onChangeText={(value) => handleChange("location", value)}
         placeholder="e.g. Warehouse A"
         placeholderTextColor={colors.textSecondary}
+        maxLength={100}
       />
 
-      <Pressable style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitText}>Add Item</Text>
+      <Pressable
+        style={[styles.submitButton, { opacity: isSubmitting ? 0.6 : 1 }]}
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.submitText}>
+          {isSubmitting ? "Adding Item..." : "Add Item"}
+        </Text>
       </Pressable>
     </ScrollView>
   );
@@ -165,9 +262,17 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     fontSize: FONT_SIZES.body,
   },
+  inputError: {
+    borderColor: "#DC2626",
+  },
   multiline: {
     minHeight: 90,
     textAlignVertical: "top",
+  },
+  error: {
+    color: "#DC2626",
+    fontSize: FONT_SIZES.small,
+    marginTop: SPACING.xs,
   },
   submitButton: {
     marginTop: SPACING.lg,

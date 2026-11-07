@@ -61,7 +61,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
     try {
       const result = await loginUser(email, password);
-
+      console.log("Login result:", result);
       if (result.returnCode !== 0) {
         throw new Error(result.returnMessage);
       }
@@ -77,6 +77,10 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
       await saveToken(result.token);
       await saveUser(loggedInUser);
       setUser(loggedInUser);
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : new Error("Unable to log in. Please try again.");
     } finally {
       setIsLoading(false);
     }

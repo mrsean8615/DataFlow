@@ -1,7 +1,8 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "@/context/ThemeContext";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/types/navigationTypes";
 
@@ -17,9 +18,11 @@ export default function InventoryPage() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Inventory">>();
 
-  useEffect(() => {
-    getInventoryData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getInventoryData();
+    }, []),
+  );
 
   function getInventoryData() {
     GetInventory()

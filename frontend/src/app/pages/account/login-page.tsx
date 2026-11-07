@@ -13,22 +13,62 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-
 import { COLORS, SPACING, FONT_SIZES } from "@/constants/theme";
+
+type LoginForm = {
+  email: string;
+  password: string;
+};
+
+type LoginErrors = {
+  email?: string;
+  password?: string;
+};
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const { colors } = useTheme();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState<LoginForm>({
+    email: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [error, setError] = useState("");
+
+  const handleChange = (field: keyof LoginForm, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setError("");
+  };
+
+  const validateForm = () => {
+    const newErrors: LoginErrors = {};
+
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      newErrors.email = "Enter a valid email address.";
+    }
+
+    if (!form.password.trim()) {
+      newErrors.password = "Password is required.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleLogin = async () => {
     setError("");
 
+    if (!validateForm()) return;
+
     try {
-      await login(email, password);
+      await login(form.email.trim(), form.password);
     } catch (err) {
       setError(
         err instanceof Error
@@ -37,6 +77,14 @@ export default function LoginPage() {
       );
     }
   };
+  const inputStyle = [
+    styles.input,
+    {
+      color: colors.text,
+      backgroundColor: colors.backgroundElement,
+      borderColor: colors.backgroundSelected,
+    },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -48,7 +96,6 @@ export default function LoginPage() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          {/* App Branding */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>DataFlow</Text>
 
@@ -57,7 +104,6 @@ export default function LoginPage() {
             </Text>
           </View>
 
-          {/* Login Form */}
           <View style={styles.form}>
             <Text style={[styles.heading, { color: colors.text }]}>
               Welcome Back
@@ -74,22 +120,19 @@ export default function LoginPage() {
               </Text>
 
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.backgroundElement,
-                    borderColor: colors.backgroundSelected,
-                  },
-                ]}
+                style={[inputStyle, errors.email && styles.inputError]}
                 placeholder="Enter your email"
                 placeholderTextColor={colors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
+                value={form.email}
+                onChangeText={(value) => handleChange("email", value)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="email"
+                maxLength={254}
               />
+
+              {errors.email && <Text style={styles.error}>{errors.email}</Text>}
             </View>
 
             {/* Password */}
@@ -99,27 +142,23 @@ export default function LoginPage() {
               </Text>
 
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.backgroundElement,
-                    borderColor: colors.backgroundSelected,
-                  },
-                ]}
+                style={[inputStyle, errors.password && styles.inputError]}
                 placeholder="Enter your password"
                 placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
+                value={form.password}
+                onChangeText={(value) => handleChange("password", value)}
                 secureTextEntry
                 autoCapitalize="none"
+                autoComplete="current-password"
               />
+
+              {errors.password && (
+                <Text style={styles.error}>{errors.password}</Text>
+              )}
             </View>
 
-            {/* Error Message */}
             {error !== "" && <Text style={styles.error}>{error}</Text>}
 
-            {/* Login Button */}
             <Pressable
               style={[
                 styles.button,
@@ -139,7 +178,6 @@ export default function LoginPage() {
             </Pressable>
           </View>
 
-          {/* Footer */}
           <Text style={[styles.footer, { color: colors.textSecondary }]}>
             DataFlow Inventory Management
           </Text>
@@ -201,6 +239,9 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: FONT_SIZES.body,
   },
+  inputError: {
+    borderColor: "#DC2626",
+  },
   button: {
     padding: SPACING.md,
     borderRadius: 8,
@@ -217,7 +258,7 @@ const styles = StyleSheet.create({
   error: {
     color: "#DC2626",
     fontSize: FONT_SIZES.small,
-    marginBottom: SPACING.sm,
+    marginTop: SPACING.xs,
   },
   footer: {
     textAlign: "center",
