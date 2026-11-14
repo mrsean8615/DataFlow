@@ -5,6 +5,7 @@ using DataFlow.Api.DAL;
 using DataFlow.Api.Helpers;
 using System.Data;
 using Microsoft.Data.SqlClient;
+using System.Text.Json;
 
 namespace DataFlow.Api.Repositories;
 
@@ -30,62 +31,135 @@ public class AuthSQL : IAuthRepository
         return parameter;
     }
 
-public async Task<LoginOutput> Login(LoginInput input)
-{
-    try
+    public async Task<LoginOutput> Login(LoginInput input)
     {
-        var connection = _context.Database.GetDbConnection();
-
-        await using var command = connection.CreateCommand();
-
-        command.CommandText = "dbo.Login";
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add(
-            new SqlParameter("@Email", input.email)
-        );
-
-        command.Parameters.Add(
-            new SqlParameter("@Password", input.password)
-        );
-
-        if (connection.State != ConnectionState.Open)
+        try
         {
-            await connection.OpenAsync();
-        }
+            var connection = _context.Database.GetDbConnection();
 
-        await using var reader = await command.ExecuteReaderAsync();
+            await using var command = connection.CreateCommand();
 
-        if (!await reader.ReadAsync())
-        {
-            throw new InvalidOperationException(
-                "Login procedure returned no result."
+            command.CommandText = "dbo.Login";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(
+                new SqlParameter("@Email", input.email)
             );
+
+            command.Parameters.Add(
+                new SqlParameter("@Password", input.password)
+            );
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                throw new InvalidOperationException(
+                    "Login procedure returned no result."
+                );
+            }
+
+            return new LoginOutput
+            {
+                returnCode = Convert.ToInt32(reader["returnCode"]),
+                returnMessage = reader["returnMessage"]?.ToString() ?? "",
+                id = Convert.ToInt32(reader["id"]),
+                firstName = reader["firstName"]?.ToString() ?? "",
+                lastName = reader["lastName"]?.ToString() ?? "",
+                email = reader["email"]?.ToString() ?? "",
+                role = reader["role"]?.ToString() ?? ""
+            };
         }
-
-        return new LoginOutput
+        catch (Exception ex)
         {
-            returnCode = Convert.ToInt32(reader["returnCode"]),
-            returnMessage = reader["returnMessage"]?.ToString() ?? "",
-            id = Convert.ToInt32(reader["id"]),
-            firstName = reader["firstName"]?.ToString() ?? "",
-            lastName = reader["lastName"]?.ToString() ?? "",
-            email = reader["email"]?.ToString() ?? "",
-            role = reader["role"]?.ToString() ?? ""
-        };
+            await _logger.LogEventAsync(new EventLog
+            {
+                eventType = "ERROR",
+                className = nameof(AuthSQL),
+                methodName = nameof(Login),
+                eventData = ex
+            });
+
+            throw;
+        }
     }
-    catch (Exception ex)
+    public async Task<GetUsersOutput> GetUsers(GetUsersInput input)
     {
-        await _logger.LogEventAsync(new EventLog
+        GetUsersOutput result = new GetUsersOutput();
+        try
         {
-            eventType = "ERROR",
-            className = nameof(AuthSQL),
-            methodName = nameof(Login),
-            eventData = ex
-        });
+            var output = await _context.Set<GetUsersOutput>()
+                .FromSqlRaw(
+                    "EXEC GetUsers @requester",
+                    new SqlParameter("@requester", input.requester)
+                )
+                .ToListAsync();
 
-        throw;
+            result = output.FirstOrDefault() ?? new GetUsersOutput();
+
+            if (result.returnCode == 0)
+            {
+                result.users = JsonSerializer.Deserialize<List<User>>(
+                    result.usersJson,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }
+                ) ?? new List<User>();
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            result.returnCode = 1;
+            result.returnMessage = ex.Message;
+            return result;
+        }
     }
-}
-    
+
+    public async Task<BaseOutputEntity> CreateUser(CreateUserInput input)
+    {
+        Console.WriteLine($"Controller requester: {input}");
+        try
+        {
+            var result = await _context.Set<BaseOutputEntity>()
+                .FromSqlRaw(
+                    """
+                    EXEC dbo.CreateUser
+                        @requester = {0},
+                        @firstName = {1},
+                        @lastName = {2},
+                        @email = {3},
+                        @role = {4},
+                        @password = {5}
+                    """,
+                    input.requester,
+                    input.firstName,
+                    input.lastName,
+                    input.email,
+                    input.role,
+                    input.password)
+                .ToListAsync();
+            return result.First();
+        }
+        catch (Exception ex)
+        {
+            await _logger.LogEventAsync(new EventLog
+            {
+                eventType = "ERROR",
+                className = nameof(AuthSQL),
+                methodName = nameof(CreateUser),
+                eventData = ex
+            });
+
+            throw;
+        }
+    }
+        
 }

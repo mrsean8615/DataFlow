@@ -27,6 +27,12 @@ public class DataFlowContext : DbContext
         });
 
         modelBuilder.Entity<LoginOutput>();
+
+        modelBuilder.Entity<GetUsersOutput>(entity =>
+        {
+            entity.HasNoKey(); // This entity does not have a primary key
+            entity.ToView(null); // This entity is not mapped to a database view
+        });
     }
 
 }

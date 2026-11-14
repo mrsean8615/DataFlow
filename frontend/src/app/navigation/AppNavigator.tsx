@@ -34,6 +34,7 @@ import SettingsPage from "../pages/settings/settings-page";
 import LoginPage from "../pages/account/login-page";
 import { ActivityIndicator } from "react-native";
 import AdminPage from "../pages/admin/admin-page";
+import CreateUserPage from "../pages/admin/create-user-page";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -117,6 +118,14 @@ function LoginScreen() {
   return <LoginPage />;
 }
 
+function CreateUserScreen() {
+  return (
+    <MainLayout title="Create User">
+      <CreateUserPage />
+    </MainLayout>
+  );
+}
+
 // Nested stack navigators
 function HomeStack() {
   return (
@@ -170,7 +179,8 @@ function ProfileStack() {
 function AdminStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Admin Panel" component={AdminScreen} />
+      <Stack.Screen name="AdminPanel" component={AdminScreen} />
+      <Stack.Screen name="CreateUser" component={CreateUserScreen} />
     </Stack.Navigator>
   );
 }

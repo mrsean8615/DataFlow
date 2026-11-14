@@ -29,4 +29,10 @@ export type DrawerParamList = {
   Profile: undefined;
   Settings: undefined;
   Login: undefined;
+  AdminPanel: undefined;
+};
+
+export type AdminStackParamList = {
+  AdminPanel: undefined;
+  CreateUser: undefined;
 };
