@@ -20,6 +20,19 @@ public class LoginOutput
     public string role { get; set; } = string.Empty;
 }
 
+public class GetUserByEmailOutput
+{
+    public int returnCode { get; set; } = 0;
+    public string returnMessage { get; set; } = string.Empty;
+
+    public int id { get; set; }
+    public string firstName { get; set; } = string.Empty;
+    public string lastName { get; set; } = string.Empty;
+    public string email { get; set; } = string.Empty;
+    public string passwordHash { get; set; } = string.Empty;
+    public string role { get; set; } = string.Empty;
+}
+
 public class User
 {
     public int id { get; set; }

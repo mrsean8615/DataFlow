@@ -14,7 +14,7 @@ public interface IAuthLogic
 
 public interface IAuthRepository
 {
-    Task<LoginOutput> Login(LoginInput input);
+    Task<GetUserByEmailOutput> GetUserByEmail(string email);
     Task<GetUsersOutput> GetUsers(GetUsersInput input);
     Task<BaseOutputEntity> CreateUser(CreateUserInput input);
 

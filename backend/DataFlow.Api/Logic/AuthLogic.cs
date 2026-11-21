@@ -17,35 +17,63 @@ public class AuthLogic : IAuthLogic
         _jwtService = jwtService;
     }
 
-    public async Task<LoginOutput> Login(LoginInput input)
+public async Task<LoginOutput> Login(LoginInput input)
+{
+    try
     {
-        try
+        var user = await _authRepository.GetUserByEmail(input.email);
+
+        if (user == null || user.returnCode != 0)
         {
-            var user = await _authRepository.Login(input);
-
-            if (user == null) 
+            return new LoginOutput
             {
-                return new LoginOutput();
-            }
-
-            user.token = _jwtService.GenerateToken(user);
-
-            return user;
-
+                returnCode = 1,
+                returnMessage = "Invalid email or password."
+            };
         }
-        catch (Exception ex)
+
+        bool isValid = PasswordUtils.VerifyPassword(
+            user.passwordHash,
+            input.password
+        );
+
+        if (!isValid)
         {
-            await _logger.LogEventAsync(new EventLog
+            return new LoginOutput
             {
-                eventType = "ERROR",
-                className = nameof(AuthLogic),
-                methodName = nameof(Login),
-                eventData = ex
-            });
-
-            throw;
+                returnCode = 1,
+                returnMessage = "Invalid email or password."
+            };
         }
-    } 
+
+        var output = new LoginOutput
+        {
+            returnCode = 0,
+            returnMessage = "Login successful.",
+            id = user.id,
+            firstName = user.firstName,
+            lastName = user.lastName,
+            email = user.email,
+            role = user.role
+        };
+
+        output.token = _jwtService.GenerateToken(output);
+
+        return output;
+    }
+    catch (Exception ex)
+    {
+        await _logger.LogEventAsync(new EventLog
+        {
+            eventType = "ERROR",
+            className = nameof(AuthLogic),
+            methodName = nameof(Login),
+            eventData = ex
+        });
+
+        throw;
+    }
+}
 
     public async Task<GetUsersOutput> GetUsers(GetUsersInput input)
     {
@@ -76,6 +104,7 @@ public class AuthLogic : IAuthLogic
     {
         try
         {
+            input.password = PasswordUtils.HashPassword(input.password);
             var users = await _authRepository.CreateUser(input);
             if (users == null) 
             {

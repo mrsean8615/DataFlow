@@ -31,7 +31,7 @@ public class AuthSQL : IAuthRepository
         return parameter;
     }
 
-    public async Task<LoginOutput> Login(LoginInput input)
+    public async Task<GetUserByEmailOutput> GetUserByEmail(string email)
     {
         try
         {
@@ -39,15 +39,11 @@ public class AuthSQL : IAuthRepository
 
             await using var command = connection.CreateCommand();
 
-            command.CommandText = "dbo.Login";
+            command.CommandText = "dbo.GetUserByEmail";
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add(
-                new SqlParameter("@Email", input.email)
-            );
-
-            command.Parameters.Add(
-                new SqlParameter("@Password", input.password)
+                CreateParameter(command, "@Email", email)
             );
 
             if (connection.State != ConnectionState.Open)
@@ -64,7 +60,7 @@ public class AuthSQL : IAuthRepository
                 );
             }
 
-            return new LoginOutput
+            return new GetUserByEmailOutput
             {
                 returnCode = Convert.ToInt32(reader["returnCode"]),
                 returnMessage = reader["returnMessage"]?.ToString() ?? "",
@@ -72,7 +68,8 @@ public class AuthSQL : IAuthRepository
                 firstName = reader["firstName"]?.ToString() ?? "",
                 lastName = reader["lastName"]?.ToString() ?? "",
                 email = reader["email"]?.ToString() ?? "",
-                role = reader["role"]?.ToString() ?? ""
+                role = reader["role"]?.ToString() ?? "",
+                passwordHash = reader["passwordHash"]?.ToString() ?? ""
             };
         }
         catch (Exception ex)
@@ -81,7 +78,7 @@ public class AuthSQL : IAuthRepository
             {
                 eventType = "ERROR",
                 className = nameof(AuthSQL),
-                methodName = nameof(Login),
+                methodName = nameof(GetUserByEmail),
                 eventData = ex
             });
 

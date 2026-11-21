@@ -171,7 +171,9 @@ export default function LoginPage() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                </View>
               ) : (
                 <Text style={styles.buttonText}>Sign In</Text>
               )}
@@ -264,5 +266,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: SPACING.lg * 2,
     fontSize: FONT_SIZES.small,
+  },
+  loadingContainer: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

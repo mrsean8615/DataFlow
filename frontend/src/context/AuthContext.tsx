@@ -61,7 +61,6 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
     try {
       const result = await loginUser(email, password);
-      console.log("Login result:", result);
       if (result.returnCode !== 0) {
         throw new Error(result.returnMessage);
       }

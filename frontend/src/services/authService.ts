@@ -3,12 +3,37 @@ import { getToken } from "./tokenStorage";
 import { CreateUserInput, GetUsersOutput } from "@/types/AdminTypes";
 import { BaseOutputType } from "@/types/BaseTypes";
 
+import { demoUsers } from "@/data/demoUsers";
+import { useDemoData } from "@/app/utils/dataUtils";
+
 const API_URL = process.env.EXPO_PUBLIC_LOCAL_API_URL;
 
 export async function loginUser(
   email: string,
   password: string,
 ): Promise<LoginResponse> {
+  const demoMode = useDemoData(true);
+
+  if (demoMode) {
+    const user = demoUsers.find(
+      (user) => user.email.toLowerCase() === email.trim().toLowerCase(),
+    );
+
+    if (!user || password !== "password123") {
+      throw new Error("Invalid email or password.");
+    }
+
+    return {
+      returnCode: 0,
+      returnMessage: "Demo login successful.",
+      token: `demo-token-${user.id}`,
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    };
+  }
   const response = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
@@ -29,6 +54,14 @@ export async function loginUser(
 }
 
 export async function GetUsers(requester: number): Promise<GetUsersOutput> {
+  const demoData = useDemoData(demoUsers);
+  if (demoData) {
+    return {
+      returnCode: 0,
+      returnMessage: "Users retrieved successfully.",
+      users: demoData.filter((user) => user.id !== String(requester)),
+    };
+  }
   const token = await getToken();
   const response = await fetch(`${API_URL}/api/auth/GetUsers`, {
     method: "POST",

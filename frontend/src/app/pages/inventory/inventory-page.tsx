@@ -1,60 +1,159 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useTheme } from "@/context/ThemeContext";
-import { useCallback, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "@/types/navigationTypes";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 
-import InventoryCard from "@/components/inventory/inventory-card";
-import ScreenTitle from "@/components/general/ScreenTitle";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useCallback, useMemo, useState } from "react";
+
+import { useTheme } from "@/context/ThemeContext";
+import type { RootStackParamList } from "@/types/navigationTypes";
+import type { InventoryItem } from "@/types/inventoryType";
 
 import { GetInventory } from "@/services/inventoryService";
+
+import ScreenTitle from "@/components/general/ScreenTitle";
 import AddButton from "@/components/general/addButton";
+
+import InventorySummary from "@/app/pages/inventory/inventorySummary";
+import InventorySearch from "@/app/pages/inventory/inventorySearch";
+import InventoryFilters, {
+  InventoryFilter,
+} from "@/app/pages/inventory/inventoryFilters";
+import InventoryListItem from "@/app/pages/inventory/inventoryListItem";
 
 export default function InventoryPage() {
   const { colors } = useTheme();
-  const [inventoryData, setInventoryData] = useState<any[]>([]);
+
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Inventory">>();
 
+  const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<InventoryFilter>("All");
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
-      getInventoryData();
+      let isActive = true;
+
+      setLoading(true);
+      setError(false);
+
+      GetInventory()
+        .then((data: InventoryItem[]) => {
+          if (isActive) {
+            setInventoryData(data ?? []);
+          }
+        })
+        .catch((error) => {
+          console.error("Inventory API error:", error);
+          if (isActive) setError(true);
+        })
+        .finally(() => {
+          if (isActive) setLoading(false);
+        });
+
+      return () => {
+        isActive = false;
+      };
     }, []),
   );
 
-  function getInventoryData() {
-    GetInventory()
-      .then((data) => {
-        return setInventoryData(data);
-      })
-      .catch((error) => {
-        console.error("API error:", error);
-      });
-  }
+  const filteredInventory = useMemo(() => {
+    return inventoryData.filter((item) => {
+      if (item.isActive === false) return false;
+
+      const searchValue = search.toLowerCase().trim();
+
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchValue) ||
+        item.sku.toLowerCase().includes(searchValue) ||
+        (item.location ?? "").toLowerCase().includes(searchValue);
+
+      const status =
+        item.quantity <= 0
+          ? "Out of Stock"
+          : item.quantity <= item.reorderLevel
+            ? "Low Stock"
+            : "In Stock";
+
+      const matchesFilter =
+        selectedFilter === "All" || status === selectedFilter;
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [inventoryData, search, selectedFilter]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View>
-        <ScreenTitle>Inventory</ScreenTitle>
-        {inventoryData.length > 0 ? (
-          inventoryData.map((item, index) => (
-            <InventoryCard
-              key={index}
-              InventoryItem={item}
-              onPress={() => navigation.navigate("InventoryDetails", { item })}
-            />
-          ))
-        ) : (
-          <Text style={{ color: colors.text }}>
-            No inventory data available.
-          </Text>
+      <FlatList
+        data={filteredInventory}
+        keyExtractor={(item) => String(item.inventoryID)}
+        renderItem={({ item }) => (
+          <InventoryListItem
+            item={item}
+            onPress={() => navigation.navigate("InventoryDetails", { item })}
+          />
         )}
-      </View>
-      <AddButton
-        style={{ alignSelf: "center" }}
-        onPress={() => navigation.navigate("AddItem")}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <InventorySummary
+              inventory={inventoryData.filter(
+                (item) => item.isActive !== false,
+              )}
+            />
+
+            <InventorySearch value={search} onChangeText={setSearch} />
+
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Products
+              </Text>
+              <Text
+                style={[styles.resultCount, { color: colors.textSecondary }]}
+              >
+                {filteredInventory.length} items
+              </Text>
+            </View>
+
+            <InventoryFilters
+              selected={selectedFilter}
+              onSelect={setSelectedFilter}
+            />
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            {loading ? (
+              <ActivityIndicator size="large" color={colors.text} />
+            ) : (
+              <Text style={{ color: colors.textSecondary }}>
+                {error
+                  ? "Unable to load inventory. Please try again."
+                  : inventoryData.length === 0
+                    ? "No inventory data available."
+                    : "No products match your search or filter."}
+              </Text>
+            )}
+          </View>
+        }
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
+
+      <View style={styles.addButtonContainer}>
+        <AddButton
+          style={{ alignSelf: "center" }}
+          onPress={() => navigation.navigate("AddItem")}
+        />
+      </View>
     </View>
   );
 }
@@ -62,12 +161,37 @@ export default function InventoryPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  header: {
+    gap: 18,
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  resultCount: {
+    fontSize: 12,
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: 10,
+  },
+  emptyContainer: {
+    flex: 1,
+    minHeight: 150,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  addButtonContainer: {
+    paddingVertical: 10,
   },
 });
